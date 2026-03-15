@@ -1,12 +1,12 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import AliasChoices, BaseModel, EmailStr, Field
 
 from app.schemas.user import UserResponse
 
 
 class RegisterRequest(BaseModel):
     username: str
-    email: EmailStr | None = None
-    phone: str | None = None
+    email: EmailStr
+    phone: str | None = Field(default=None, validation_alias=AliasChoices("phone", "Phonenumber"))
     password: str
 
 
