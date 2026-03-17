@@ -1,3 +1,5 @@
+"""用户模块数据库访问层。"""
+
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
@@ -26,6 +28,7 @@ class UserRepository(BaseRepository):
         return self.db.execute(statement).scalar_one_or_none()
 
     def get_by_identifier(self, identifier: str) -> User | None:
+        # 当前客户端允许用户名、邮箱、手机号任意一种方式登录。
         statement = select(User).where(
             or_(
                 User.username == identifier,
@@ -45,6 +48,7 @@ class UserRepository(BaseRepository):
         avatar_url: str | None = None,
         biometric_enabled: bool | None = False,
     ) -> User:
+        # commit + refresh 后，调用方可以直接拿到数据库生成的 Id 和时间字段。
         user = User(
             username=username,
             email=email,

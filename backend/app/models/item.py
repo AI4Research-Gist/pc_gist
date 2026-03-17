@@ -1,3 +1,5 @@
+"""items 表 ORM 模型。"""
+
 from typing import Any
 
 from sqlalchemy import ForeignKey, Integer, JSON, String, Text
@@ -24,5 +26,6 @@ class Item(NocoTimestampMixin, Base):
     meta_json: Mapped[dict[str, Any] | None] = mapped_column(JSON)
     ownerId: Mapped[int | None] = mapped_column("ownerId", Integer, ForeignKey("users.Id"), index=True)
 
+    # 条目既可以直接归属于用户，也可以再进一步绑定到某个项目。
     owner = relationship("User", back_populates="items")
     project = relationship("Project", back_populates="items")

@@ -1,3 +1,5 @@
+"""认证业务逻辑层。"""
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -13,6 +15,7 @@ class AuthService:
         self.user_repository = UserRepository(db)
 
     def register(self, payload: RegisterRequest) -> LoginResponse:
+        # 先做参数校验，再做唯一性校验，最后才写数据库。
         self._validate_register_payload(payload)
         self._ensure_user_not_exists(payload)
 
@@ -28,6 +31,7 @@ class AuthService:
         return LoginResponse(user=self._to_user_response(user), access_token=token)
 
     def login(self, payload: LoginRequest) -> LoginResponse:
+        # 登录沿用原项目约定，支持用户名/邮箱/手机号三种标识。
         self._validate_login_payload(payload)
 
         user = self.user_repository.get_by_identifier(payload.identifier.strip())
@@ -37,8 +41,7 @@ class AuthService:
                 detail="Invalid username, email, or phone number.",
             )
 
-        # Password is compared in plain text for now to stay compatible with
-        # the current NocoDB-style schema. This can be upgraded later.
+        # 当前仍按原数据库方式使用明文密码，后续如升级安全策略可切到哈希校验。
         if user.password != payload.password:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -49,6 +52,7 @@ class AuthService:
         return LoginResponse(user=self._to_user_response(user), access_token=token)
 
     def _ensure_user_not_exists(self, payload: RegisterRequest) -> None:
+        # 显式做唯一性判断，可以给前端返回更明确的冲突信息。
         if self.user_repository.get_by_username(payload.username):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -95,6 +99,7 @@ class AuthService:
 
     @staticmethod
     def _to_user_response(user: User) -> UserResponse:
+        # 把 ORM 字段转换成接口层约定的响应结构。
         return UserResponse(
             id=user.Id,
             username=user.username,

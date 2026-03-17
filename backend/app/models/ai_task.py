@@ -1,3 +1,5 @@
+"""AI 异步任务表模型占位。"""
+
 from typing import Any
 
 from sqlalchemy import BigInteger, Integer, JSON, String, Text

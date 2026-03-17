@@ -1,8 +1,11 @@
+"""v1 版本接口聚合文件。"""
+
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import ai_tasks, auth, health, items, projects, users
 
 api_v1_router = APIRouter()
+# 按业务模块拆分路由，避免所有接口堆在一个文件里。
 api_v1_router.include_router(health.router, tags=["health"])
 api_v1_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_v1_router.include_router(users.router, prefix="/users", tags=["users"])

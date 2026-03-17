@@ -1,3 +1,5 @@
+"""仓储层基础类。"""
+
 from sqlalchemy.orm import Session
 
 

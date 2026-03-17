@@ -1,3 +1,5 @@
+"""条目模块请求与响应模型。"""
+
 from datetime import datetime
 from typing import Any
 
@@ -5,6 +7,8 @@ from pydantic import BaseModel, ConfigDict
 
 
 class ItemBase(BaseModel):
+    """条目通用字段。"""
+
     type: str
     title: str
     summary: str | None = None
@@ -39,6 +43,8 @@ class ItemUpdateRequest(BaseModel):
 
 
 class ItemResponse(ItemBase):
+    """条目详情响应模型。"""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -48,6 +54,8 @@ class ItemResponse(ItemBase):
 
 
 class ItemListResponse(BaseModel):
+    """条目列表响应模型。"""
+
     list: list[ItemResponse]
     total: int
     page: int = 1

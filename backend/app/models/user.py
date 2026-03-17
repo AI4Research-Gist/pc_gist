@@ -1,3 +1,5 @@
+"""users 表 ORM 模型。"""
+
 from sqlalchemy import Boolean, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -16,5 +18,6 @@ class User(NocoTimestampMixin, Base):
     avatar_url: Mapped[str | None] = mapped_column(String(255))
     biometric_enabled: Mapped[bool | None] = mapped_column(Boolean)
 
+    # 关系字段主要服务于后续的用户隔离和联表查询。
     projects = relationship("Project", back_populates="owner")
     items = relationship("Item", back_populates="owner")

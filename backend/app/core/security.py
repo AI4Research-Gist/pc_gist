@@ -1,3 +1,5 @@
+"""安全相关工具函数。"""
+
 from datetime import UTC, datetime, timedelta
 
 from jose import jwt
@@ -5,6 +7,7 @@ from passlib.context import CryptContext
 
 from app.core.config import settings
 
+# 当前项目仍兼容原始明文密码字段，但这里先准备好 bcrypt 能力，后续升级时可直接切换。
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -17,6 +20,7 @@ def get_password_hash(password: str) -> str:
 
 
 def create_access_token(subject: str) -> str:
+    # 目前 token 的 subject 约定为用户主键 ID。
     expire = datetime.now(UTC) + timedelta(minutes=settings.access_token_expire_minutes)
     payload = {"sub": subject, "exp": expire}
     return jwt.encode(payload, settings.secret_key, algorithm="HS256")

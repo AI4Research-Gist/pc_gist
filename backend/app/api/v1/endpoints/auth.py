@@ -1,3 +1,5 @@
+"""认证相关接口。"""
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -10,11 +12,13 @@ router = APIRouter()
 
 @router.post("/register", response_model=LoginResponse, summary="Register a user")
 def register(payload: RegisterRequest, db: Session = Depends(get_db)) -> LoginResponse:
+    # 注册逻辑统一放到 Service 层，接口层只负责接收请求和返回结果。
     return AuthService(db).register(payload)
 
 
 @router.post("/login", response_model=LoginResponse, summary="Login")
 def login(payload: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse:
+    # 登录支持用户名、邮箱、手机号三种标识。
     return AuthService(db).login(payload)
 
 

@@ -1,3 +1,5 @@
+"""项目业务逻辑层占位实现。"""
+
 from app.schemas.project import (
     ProjectCreateRequest,
     ProjectListResponse,
@@ -8,6 +10,7 @@ from app.schemas.project import (
 
 class ProjectService:
     def list_projects(self) -> ProjectListResponse:
+        # 先返回演示数据，后续会切换成 Repository + 数据库查询。
         projects = [
             ProjectResponse(
                 id=1,
@@ -34,6 +37,7 @@ class ProjectService:
         )
 
     def update_project(self, project_id: int, payload: ProjectUpdateRequest) -> ProjectResponse:
+        # 更新逻辑采用“原数据 + 非空字段覆盖”的方式。
         base = self.get_project(project_id).model_dump()
         base.update(payload.model_dump(exclude_none=True))
         return ProjectResponse(**base)

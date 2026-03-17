@@ -1,3 +1,5 @@
+"""AI 任务业务逻辑层占位实现。"""
+
 from app.schemas.ai_task import AITaskCreateRequest, AITaskResponse, AITaskStatusResponse
 
 

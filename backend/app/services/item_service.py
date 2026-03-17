@@ -1,8 +1,11 @@
+"""条目业务逻辑层占位实现。"""
+
 from app.schemas.item import ItemCreateRequest, ItemListResponse, ItemResponse, ItemUpdateRequest
 
 
 class ItemService:
     def list_items(self) -> ItemListResponse:
+        # 当前仅返回一条示例数据，便于前后端先联调接口结构。
         items = [
             ItemResponse(
                 id=1,
@@ -45,6 +48,7 @@ class ItemService:
         )
 
     def update_item(self, item_id: int, payload: ItemUpdateRequest) -> ItemResponse:
+        # 更新逻辑与项目模块一致，使用非空字段覆盖原值。
         base = self.get_item(item_id).model_dump()
         base.update(payload.model_dump(exclude_none=True))
         return ItemResponse(**base)

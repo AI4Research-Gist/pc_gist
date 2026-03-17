@@ -1,3 +1,5 @@
+"""项目相关接口。"""
+
 from fastapi import APIRouter
 
 from app.schemas.project import (

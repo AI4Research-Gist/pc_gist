@@ -1,3 +1,5 @@
+"""AI 任务模块请求与响应模型。"""
+
 from datetime import datetime
 from typing import Any
 
@@ -5,6 +7,8 @@ from pydantic import BaseModel, ConfigDict
 
 
 class AITaskCreateRequest(BaseModel):
+    """创建 AI 任务时的请求体。"""
+
     task_type: str
     input_type: str
     input_payload: dict[str, Any]
@@ -12,6 +16,8 @@ class AITaskCreateRequest(BaseModel):
 
 
 class AITaskResponse(BaseModel):
+    """创建 AI 任务后的简要响应。"""
+
     id: int
     task_type: str
     input_type: str
@@ -20,6 +26,8 @@ class AITaskResponse(BaseModel):
 
 
 class AITaskStatusResponse(BaseModel):
+    """AI 任务状态查询响应。"""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int

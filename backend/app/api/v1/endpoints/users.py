@@ -1,3 +1,5 @@
+"""用户相关接口。"""
+
 from fastapi import APIRouter
 
 from app.schemas.user import UserResponse, UserUpdateRequest

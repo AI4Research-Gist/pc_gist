@@ -1,3 +1,5 @@
+"""AI 任务相关接口。"""
+
 from fastapi import APIRouter
 
 from app.schemas.ai_task import (

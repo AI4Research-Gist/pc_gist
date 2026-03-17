@@ -1,0 +1,64 @@
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+gist/
+
+# Conda
+.conda/
+conda-meta/
+
+# Environment files
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Test and coverage artifacts
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Tooling caches
+.mypy_cache/
+.ruff_cache/
+.nox/
+.tox/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.code-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Build and distribution
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Alembic local artifacts
+alembic/versions/__pycache__/
+backend/alembic/versions/__pycache__/
+
