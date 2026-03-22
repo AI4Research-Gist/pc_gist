@@ -1,57 +1,147 @@
-"""条目业务逻辑层占位实现。"""
+"""条目业务逻辑层。"""
 
+import json
+from typing import Any
+
+from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
+
+from app.models.item import Item
+from app.repositories.item_repository import ItemRepository
+from app.repositories.project_repository import ProjectRepository
+from app.repositories.user_repository import UserRepository
 from app.schemas.item import ItemCreateRequest, ItemListResponse, ItemResponse, ItemUpdateRequest
 
 
 class ItemService:
-    def list_items(self) -> ItemListResponse:
-        # 当前仅返回一条示例数据，便于前后端先联调接口结构。
-        items = [
-            ItemResponse(
-                id=1,
-                owner_id=1,
-                type="paper",
-                title="示例条目",
-                summary="条目模块骨架占位数据",
-                content_md="# 示例条目",
-                origin_url="https://example.com",
-                audio_url=None,
-                status="processing",
-                read_status="unread",
-                is_starred=False,
-                tags="demo",
-                project_id=1,
-                meta_json={"source": "scaffold"},
-            )
-        ]
-        return ItemListResponse(list=items, total=len(items))
+    def __init__(self, db: Session) -> None:
+        self.item_repository = ItemRepository(db)
+        self.project_repository = ProjectRepository(db)
+        self.user_repository = UserRepository(db)
 
-    def create_item(self, payload: ItemCreateRequest) -> ItemResponse:
-        return ItemResponse(id=1, owner_id=1, **payload.model_dump())
-
-    def get_item(self, item_id: int) -> ItemResponse:
-        return ItemResponse(
-            id=item_id,
-            owner_id=1,
-            type="paper",
-            title="示例条目",
-            summary="条目详情占位数据",
-            content_md="# 示例条目",
-            origin_url="https://example.com",
-            audio_url=None,
-            status="processing",
-            read_status="unread",
-            is_starred=False,
-            tags="demo",
-            project_id=1,
-            meta_json={"source": "scaffold"},
+    def list_items(
+        self,
+        *,
+        item_type: str | None = None,
+        project_id: int | None = None,
+        status: str | None = None,
+        read_status: str | None = None,
+        keyword: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+        sort_by: str = "created_at",
+        sort_order: str = "desc",
+    ) -> ItemListResponse:
+        items, total = self.item_repository.list_items(
+            item_type=item_type,
+            project_id=project_id,
+            status=status,
+            read_status=read_status,
+            keyword=keyword,
+            page=page,
+            page_size=page_size,
+            sort_by=sort_by,
+            sort_order=sort_order,
+        )
+        return ItemListResponse(
+            list=[self._to_response(item) for item in items],
+            total=total,
+            page=page,
+            page_size=page_size,
         )
 
+    def create_item(self, payload: ItemCreateRequest) -> ItemResponse:
+        self._ensure_project_exists(payload.project_id)
+        owner_id = 1 if self.user_repository.get_by_id(1) else None
+        item = self.item_repository.create_item(
+            item_type=payload.type,
+            title=payload.title,
+            summary=payload.summary,
+            content_md=payload.content_md,
+            origin_url=payload.origin_url,
+            audio_url=payload.audio_url,
+            status=payload.status,
+            read_status=payload.read_status,
+            tags=payload.tags,
+            project_id=payload.project_id,
+            meta_json=self._normalize_meta_json(payload.meta_json),
+            owner_id=owner_id,
+        )
+        return self._to_response(item)
+
+    def get_item(self, item_id: int) -> ItemResponse:
+        item = self._get_item_or_404(item_id)
+        return self._to_response(item)
+
     def update_item(self, item_id: int, payload: ItemUpdateRequest) -> ItemResponse:
-        # 更新逻辑与项目模块一致，使用非空字段覆盖原值。
-        base = self.get_item(item_id).model_dump()
-        base.update(payload.model_dump(exclude_none=True))
-        return ItemResponse(**base)
+        item = self._get_item_or_404(item_id)
+        updates = payload.model_dump(exclude_unset=True)
+        if "project_id" in updates:
+            self._ensure_project_exists(updates["project_id"])
+        if "meta_json" in updates:
+            updates["meta_json"] = self._normalize_meta_json(updates["meta_json"])
+
+        updated_item = self.item_repository.update_item(item, **updates)
+        return self._to_response(updated_item)
 
     def delete_item(self, item_id: int) -> None:
-        return None
+        item = self._get_item_or_404(item_id)
+        self.item_repository.delete_item(item)
+
+    def _get_item_or_404(self, item_id: int) -> Item:
+        item = self.item_repository.get_by_id(item_id)
+        if item is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Item {item_id} not found",
+            )
+        return item
+
+    def _ensure_project_exists(self, project_id: int | None) -> None:
+        if project_id is None:
+            return
+        project = self.project_repository.get_by_id(project_id)
+        if project is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Project {project_id} not found",
+            )
+
+    def _normalize_meta_json(self, value: dict[str, Any] | str | None) -> dict[str, Any] | None:
+        if value is None:
+            return None
+        if isinstance(value, dict):
+            return value
+        try:
+            parsed = json.loads(value)
+        except json.JSONDecodeError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="meta_json must be a valid JSON object or JSON string",
+            ) from exc
+        if not isinstance(parsed, dict):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="meta_json must be a JSON object",
+            )
+        return parsed
+
+    @staticmethod
+    def _to_response(item: Item) -> ItemResponse:
+        return ItemResponse(
+            id=item.Id,
+            owner_id=item.ownerId or 0,
+            type=item.type,
+            title=item.title,
+            summary=item.summary,
+            content_md=item.content_md,
+            origin_url=item.origin_url,
+            audio_url=item.audio_url,
+            status=item.status,
+            read_status=item.read_status,
+            tags=item.tags,
+            project_id=item.project_id,
+            meta_json=item.meta_json,
+            created_at=item.CreatedAt,
+            updated_at=item.UpdatedAt,
+        )

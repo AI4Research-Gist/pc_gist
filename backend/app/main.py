@@ -1,6 +1,13 @@
 """FastAPI 应用入口文件。"""
 
+import sys
+from pathlib import Path
+
 from fastapi import FastAPI
+
+# 兼容从 backend/app 目录直接执行 python main.py 的场景。
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.api.router import api_router
 from app.core.config import settings
@@ -25,3 +32,14 @@ def create_application() -> FastAPI:
 
 
 app = create_application()
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        "app.main:app",
+        host=settings.app_host,
+        port=settings.app_port,
+        reload=settings.app_debug,
+    )

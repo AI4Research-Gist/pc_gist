@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.security import create_access_token
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
-from app.schemas.auth import LoginRequest, LoginResponse, RegisterRequest
+from app.schemas.auth import ChangePasswordRequest, LoginRequest, LoginResponse, RegisterRequest
 from app.schemas.user import UserResponse
 
 
@@ -50,6 +50,30 @@ class AuthService:
 
         token = create_access_token(str(user.Id))
         return LoginResponse(user=self._to_user_response(user), access_token=token)
+
+    def get_current_user(self, current_user: User) -> UserResponse:
+        return self._to_user_response(current_user)
+
+    def logout(self, current_user: User) -> dict[str, str]:
+        return {"message": f"User {current_user.Id} logged out successfully"}
+
+    def change_password(self, current_user: User, payload: ChangePasswordRequest) -> dict[str, str]:
+        self._validate_change_password_payload(payload)
+
+        if current_user.password != payload.current_password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Current password is incorrect.",
+            )
+
+        if current_user.password == payload.new_password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="New password must be different from the current password.",
+            )
+
+        self.user_repository.update_user_password(current_user, payload.new_password)
+        return {"message": "Password updated successfully"}
 
     def _ensure_user_not_exists(self, payload: RegisterRequest) -> None:
         # 显式做唯一性判断，可以给前端返回更明确的冲突信息。
@@ -95,6 +119,19 @@ class AuthService:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Password cannot be empty.",
+            )
+
+    def _validate_change_password_payload(self, payload: ChangePasswordRequest) -> None:
+        if not payload.current_password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Current password cannot be empty.",
+            )
+
+        if len(payload.new_password) < 6:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="New password must be at least 6 characters long.",
             )
 
     @staticmethod

@@ -27,3 +27,16 @@ class LoginResponse(BaseModel):
     user: UserResponse
     access_token: str
     token_type: str = "bearer"
+
+
+class ChangePasswordRequest(BaseModel):
+    """修改密码请求体。"""
+
+    current_password: str
+    new_password: str
+
+
+class MessageResponse(BaseModel):
+    """简单消息响应。"""
+
+    message: str

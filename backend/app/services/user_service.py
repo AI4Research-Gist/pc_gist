@@ -1,29 +1,83 @@
-"""用户业务逻辑层占位实现。"""
+"""用户业务逻辑层。"""
 
+from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
+
+from app.models.user import User
+from app.repositories.user_repository import UserRepository
 from app.schemas.user import UserResponse, UserUpdateRequest
 
 
 class UserService:
-    def get_current_user(self) -> UserResponse:
-        # 当前仍是占位数据，后续会替换成真实鉴权用户。
-        return UserResponse(
-            id=1,
-            username="demo_user",
-            email="demo@example.com",
-            phone="13800000000",
-            avatar_url=None,
-            biometric_enabled=False,
-            status="active",
-        )
+    def __init__(self, db: Session) -> None:
+        self.user_repository = UserRepository(db)
 
-    def update_current_user(self, payload: UserUpdateRequest) -> UserResponse:
-        # 先基于当前用户生成数据，再用请求中的非空字段覆盖。
-        current = self.get_current_user()
-        data = current.model_dump()
-        updates = payload.model_dump(exclude_none=True)
-        data.update(updates)
-        return UserResponse(**data)
+    def get_current_user(self, current_user: User) -> UserResponse:
+        return self._to_user_response(current_user)
+
+    def update_current_user(self, current_user: User, payload: UserUpdateRequest) -> UserResponse:
+        self._validate_update_payload(current_user, payload)
+
+        updated_user = self.user_repository.update_user(
+            current_user,
+            username=payload.username.strip() if payload.username is not None else None,
+            email=str(payload.email) if payload.email is not None else None,
+            phone=payload.phone,
+            avatar_url=payload.avatar_url,
+            biometric_enabled=payload.biometric_enabled,
+        )
+        return self._to_user_response(updated_user)
 
     def is_username_available(self, username: str) -> bool:
-        # 这里先用演示逻辑占位，后续应走数据库查询。
-        return username != "demo_user"
+        candidate = username.strip()
+        if not candidate:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username cannot be empty.",
+            )
+        return self.user_repository.get_by_username(candidate) is None
+
+    def _validate_update_payload(self, current_user: User, payload: UserUpdateRequest) -> None:
+        if payload.username is not None:
+            username = payload.username.strip()
+            if len(username) < 3:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Username must be at least 3 characters long.",
+                )
+            existing_user = self.user_repository.get_by_username(username)
+            if existing_user and existing_user.Id != current_user.Id:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Username already exists.",
+                )
+
+        if payload.email is not None:
+            existing_user = self.user_repository.get_by_email(str(payload.email))
+            if existing_user and existing_user.Id != current_user.Id:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Email already exists.",
+                )
+
+        if payload.phone is not None:
+            existing_user = self.user_repository.get_by_phone(payload.phone)
+            if existing_user and existing_user.Id != current_user.Id:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Phone number already exists.",
+                )
+
+    @staticmethod
+    def _to_user_response(user: User) -> UserResponse:
+        return UserResponse(
+            id=user.Id,
+            username=user.username,
+            email=user.email,
+            phone=user.Phonenumber,
+            avatar_url=user.avatar_url,
+            biometric_enabled=bool(user.biometric_enabled) if user.biometric_enabled is not None else False,
+            status="active",
+            created_at=user.CreatedAt,
+            updated_at=user.UpdatedAt,
+        )

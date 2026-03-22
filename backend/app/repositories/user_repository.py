@@ -61,3 +61,36 @@ class UserRepository(BaseRepository):
         self.db.commit()
         self.db.refresh(user)
         return user
+
+    def update_user_password(self, user: User, new_password: str) -> User:
+        user.password = new_password
+        self.db.add(user)
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+
+    def update_user(
+        self,
+        user: User,
+        *,
+        username: str | None = None,
+        email: str | None = None,
+        phone: str | None = None,
+        avatar_url: str | None = None,
+        biometric_enabled: bool | None = None,
+    ) -> User:
+        if username is not None:
+            user.username = username
+        if email is not None:
+            user.email = email
+        if phone is not None:
+            user.Phonenumber = phone
+        if avatar_url is not None:
+            user.avatar_url = avatar_url
+        if biometric_enabled is not None:
+            user.biometric_enabled = biometric_enabled
+
+        self.db.add(user)
+        self.db.commit()
+        self.db.refresh(user)
+        return user

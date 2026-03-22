@@ -17,10 +17,9 @@ class ItemBase(BaseModel):
     audio_url: str | None = None
     status: str = "processing"
     read_status: str = "unread"
-    is_starred: bool = False
     tags: str | None = None
     project_id: int | None = None
-    meta_json: dict[str, Any] | None = None
+    meta_json: dict[str, Any] | str | None = None
 
 
 class ItemCreateRequest(ItemBase):
@@ -36,10 +35,9 @@ class ItemUpdateRequest(BaseModel):
     audio_url: str | None = None
     status: str | None = None
     read_status: str | None = None
-    is_starred: bool | None = None
     tags: str | None = None
     project_id: int | None = None
-    meta_json: dict[str, Any] | None = None
+    meta_json: dict[str, Any] | str | None = None
 
 
 class ItemResponse(ItemBase):
@@ -49,6 +47,7 @@ class ItemResponse(ItemBase):
 
     id: int
     owner_id: int = 0
+    meta_json: dict[str, Any] | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
