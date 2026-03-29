@@ -27,6 +27,21 @@ class Settings(BaseSettings):
         default="mysql+pymysql://root:123456@127.0.0.1:3306/gist_backend",
     )
     allowed_origins: list[str] = Field(default_factory=lambda: ["*"], alias="ALLOWED_ORIGINS")
+    siliconflow_api_key: str | None = Field(default="sk-cgoyljmdamccnilwyayaabeccgqzmocvtwwjbughcgipysky", alias="SILICONFLOW_API_KEY")
+    siliconflow_base_url: str = Field(default="https://api.siliconflow.cn/v1", alias="SILICONFLOW_BASE_URL")
+    siliconflow_text_model: str = Field(
+        default="Qwen/Qwen3.5-397B-A17B",
+        alias="SILICONFLOW_TEXT_MODEL",
+    )
+    siliconflow_vision_model: str = Field(
+        default="Pro/moonshotai/Kimi-K2.5",
+        alias="SILICONFLOW_VISION_MODEL",
+    )
+    siliconflow_audio_model: str = Field(
+        default="FunAudioLLM/SenseVoiceSmall",
+        alias="SILICONFLOW_AUDIO_MODEL",
+    )
+    siliconflow_request_timeout: int = Field(default=120, alias="SILICONFLOW_REQUEST_TIMEOUT")
 
     model_config = SettingsConfigDict(
         # 兼容从 backend/ 或仓库根目录启动服务的两种场景。

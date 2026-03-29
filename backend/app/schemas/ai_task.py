@@ -39,5 +39,7 @@ class AITaskStatusResponse(BaseModel):
     output_payload: dict[str, Any] | None = None
     status: str
     error_message: str | None = None
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
