@@ -30,6 +30,7 @@ class ProjectResponse(ProjectBase):
 
     id: int
     owner_id: int = 0
+    item_count: int = 0
     is_deleted: bool = False
     created_at: datetime | None = None
     updated_at: datetime | None = None

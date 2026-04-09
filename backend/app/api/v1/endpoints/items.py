@@ -5,7 +5,8 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db
+from app.api.deps import get_current_user, get_db
+from app.models.user import User
 from app.schemas.item import ItemCreateRequest, ItemListResponse, ItemResponse, ItemUpdateRequest
 from app.services.item_service import ItemService
 
@@ -15,6 +16,7 @@ router = APIRouter()
 @router.get("", response_model=ItemListResponse, summary="List items")
 def list_items(
     db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
     item_type: str | None = Query(default=None, alias="type"),
     project_id: int | None = Query(default=None),
     status_filter: str | None = Query(default=None, alias="status"),
@@ -47,6 +49,7 @@ def list_items(
         ItemListResponse: 包含条目列表和分页信息的响应对象。
     """
     return ItemService(db).list_items(
+        current_user=current_user,
         item_type=item_type,
         project_id=project_id,
         status=status_filter,
@@ -68,6 +71,7 @@ def list_items(
 def create_item(
     payload: ItemCreateRequest,
     db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
 ) -> ItemResponse:
     """创建一个新条目。
 
@@ -81,13 +85,14 @@ def create_item(
     Returns:
         ItemResponse: 新建条目的完整详情。
     """
-    return ItemService(db).create_item(payload)
+    return ItemService(db).create_item(payload, current_user=current_user)
 
 
 @router.get("/{item_id}", response_model=ItemResponse, summary="Get item detail")
 def get_item(
     item_id: int,
     db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
 ) -> ItemResponse:
     """获取单个条目的详情。
 
@@ -100,7 +105,7 @@ def get_item(
     Returns:
         ItemResponse: 对应条目的完整详情。
     """
-    return ItemService(db).get_item(item_id)
+    return ItemService(db).get_item(item_id, current_user=current_user)
 
 
 @router.patch("/{item_id}", response_model=ItemResponse, summary="Update item")
@@ -108,6 +113,7 @@ def update_item(
     item_id: int,
     payload: ItemUpdateRequest,
     db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
 ) -> ItemResponse:
     """更新指定条目。
 
@@ -122,13 +128,14 @@ def update_item(
     Returns:
         ItemResponse: 更新后的条目详情。
     """
-    return ItemService(db).update_item(item_id, payload)
+    return ItemService(db).update_item(item_id, payload, current_user=current_user)
 
 
 @router.delete("/{item_id}", summary="Delete item")
 def delete_item(
     item_id: int,
     db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
 ) -> dict[str, str]:
     """删除指定条目。
 
@@ -142,5 +149,5 @@ def delete_item(
     Returns:
         dict[str, str]: 删除成功后的确认消息。
     """
-    ItemService(db).delete_item(item_id)
+    ItemService(db).delete_item(item_id, current_user=current_user)
     return {"message": f"Item {item_id} deleted successfully"}

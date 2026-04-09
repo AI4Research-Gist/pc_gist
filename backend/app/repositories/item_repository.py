@@ -16,6 +16,7 @@ class ItemRepository(BaseRepository):
     def list_items(
         self,
         *,
+        owner_id: int,
         item_type: str | None = None,
         project_id: int | None = None,
         status: str | None = None,
@@ -26,7 +27,7 @@ class ItemRepository(BaseRepository):
         sort_by: str = "created_at",
         sort_order: str = "desc",
     ) -> tuple[list[Item], int]:
-        filters = []
+        filters = [Item.ownerId == owner_id]
         if item_type:
             filters.append(Item.type == item_type)
         if project_id is not None:
@@ -60,8 +61,11 @@ class ItemRepository(BaseRepository):
         total = self.db.execute(count_statement).scalar_one()
         return list(items), total
 
-    def get_by_id(self, item_id: int) -> Item | None:
-        statement = select(Item).where(Item.Id == item_id)
+    def get_by_id(self, item_id: int, *, owner_id: int) -> Item | None:
+        statement = select(Item).where(
+            Item.Id == item_id,
+            Item.ownerId == owner_id,
+        )
         return self.db.execute(statement).scalar_one_or_none()
 
     def create_item(

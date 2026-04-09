@@ -5,7 +5,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db
+from app.api.deps import get_current_user, get_db
+from app.models.user import User
 from app.schemas.project import (
     ProjectCreateRequest,
     ProjectListResponse,
@@ -20,6 +21,7 @@ router = APIRouter()
 @router.get("", response_model=ProjectListResponse, summary="List projects")
 def list_projects(
     db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
     keyword: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
@@ -38,7 +40,12 @@ def list_projects(
     Returns:
         ProjectListResponse: 包含项目列表和分页信息的响应对象。
     """
-    return ProjectService(db).list_projects(keyword=keyword, page=page, page_size=page_size)
+    return ProjectService(db).list_projects(
+        current_user=current_user,
+        keyword=keyword,
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.post(
@@ -50,6 +57,7 @@ def list_projects(
 def create_project(
     payload: ProjectCreateRequest,
     db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
 ) -> ProjectResponse:
     """创建一个新项目。
 
@@ -64,13 +72,14 @@ def create_project(
     Returns:
         ProjectResponse: 新创建项目的完整信息。
     """
-    return ProjectService(db).create_project(payload)
+    return ProjectService(db).create_project(payload, current_user=current_user)
 
 
 @router.get("/{project_id}", response_model=ProjectResponse, summary="Get project detail")
 def get_project(
     project_id: int,
     db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
 ) -> ProjectResponse:
     """获取单个项目的详情。
 
@@ -84,7 +93,7 @@ def get_project(
     Returns:
         ProjectResponse: 对应项目的详情信息。
     """
-    return ProjectService(db).get_project(project_id)
+    return ProjectService(db).get_project(project_id, current_user=current_user)
 
 
 @router.patch("/{project_id}", response_model=ProjectResponse, summary="Update project")
@@ -92,6 +101,7 @@ def update_project(
     project_id: int,
     payload: ProjectUpdateRequest,
     db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
 ) -> ProjectResponse:
     """更新指定项目。
 
@@ -106,13 +116,14 @@ def update_project(
     Returns:
         ProjectResponse: 更新后的项目信息。
     """
-    return ProjectService(db).update_project(project_id, payload)
+    return ProjectService(db).update_project(project_id, payload, current_user=current_user)
 
 
 @router.delete("/{project_id}", summary="Delete project")
 def delete_project(
     project_id: int,
     db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
 ) -> dict[str, str]:
     """删除指定项目。
 
@@ -126,5 +137,5 @@ def delete_project(
     Returns:
         dict[str, str]: 删除成功后的确认消息。
     """
-    ProjectService(db).delete_project(project_id)
+    ProjectService(db).delete_project(project_id, current_user=current_user)
     return {"message": f"Project {project_id} deleted successfully"}

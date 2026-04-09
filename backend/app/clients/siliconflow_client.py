@@ -12,7 +12,8 @@ from app.core.config import settings
 class SiliconFlowClient:
     def __init__(self) -> None:
         if not settings.siliconflow_api_key:
-            raise RuntimeError("SILICONFLOW_API_KEY is not configured.")
+            raise RuntimeError("SILICONFLOW_API" \
+            "_KEY is not configured.")
 
         self.base_url = settings.siliconflow_base_url.rstrip("/")
         self.timeout = settings.siliconflow_request_timeout

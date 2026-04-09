@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     secret_key: str = Field(default="change-me", alias="SECRET_KEY")
     access_token_expire_minutes: int = Field(default=10080, alias="ACCESS_TOKEN_EXPIRE_MINUTES")
     database_url: str = Field(
-        default="mysql+pymysql://root:123456@127.0.0.1:3306/gist_backend",
+        default="mysql+pymysql://root:1234@127.0.0.1:3306/gist_backend",
     )
     allowed_origins: list[str] = Field(default_factory=lambda: ["*"], alias="ALLOWED_ORIGINS")
     siliconflow_api_key: str | None = Field(default="sk-cgoyljmdamccnilwyayaabeccgqzmocvtwwjbughcgipysky", alias="SILICONFLOW_API_KEY")

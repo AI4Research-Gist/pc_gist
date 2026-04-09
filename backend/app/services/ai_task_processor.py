@@ -170,7 +170,7 @@ class AITaskProcessor:
             "}"
             "规则："
             "1. 返回必须是合法 JSON；"
-            "2. summary 用中文，简洁但可读；"
+            "2. summary 用中文，简洁但可读，包含主要信息；"
             "3. tags 返回数组；"
             "4. content_md 如果无法可靠生成可返回空字符串；"
             "5. note 必须放进 meta_json，不要覆盖用户字段语义；"
