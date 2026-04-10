@@ -4,6 +4,7 @@ import logging
 
 
 def configure_logging() -> None:
+    """初始化项目统一使用的日志格式与日志级别。"""
     # 先使用统一的基础日志格式，后续可以再扩展文件日志和请求链路日志。
     logging.basicConfig(
         level=logging.INFO,

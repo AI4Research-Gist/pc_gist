@@ -42,6 +42,10 @@ class Settings(BaseSettings):
         alias="SILICONFLOW_AUDIO_MODEL",
     )
     siliconflow_request_timeout: int = Field(default=120, alias="SILICONFLOW_REQUEST_TIMEOUT")
+    webpage_fetch_connect_timeout: float = Field(default=10.0, alias="WEBPAGE_FETCH_CONNECT_TIMEOUT")
+    webpage_fetch_read_timeout: float = Field(default=20.0, alias="WEBPAGE_FETCH_READ_TIMEOUT")
+    webpage_fetch_max_bytes: int = Field(default=1_500_000, alias="WEBPAGE_FETCH_MAX_BYTES")
+    webpage_fetch_retries: int = Field(default=1, alias="WEBPAGE_FETCH_RETRIES")
 
     model_config = SettingsConfigDict(
         # 兼容从 backend/ 或仓库根目录启动服务的两种场景。
@@ -54,6 +58,7 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
+    """读取并缓存全局配置对象，避免重复解析环境变量。"""
     # 配置对象只初始化一次，避免重复读取环境变量。
     return Settings()
 

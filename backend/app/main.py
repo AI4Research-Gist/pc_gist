@@ -16,6 +16,7 @@ from app.core.logging import configure_logging
 
 
 def create_application() -> FastAPI:
+    """创建并配置 FastAPI 应用实例。"""
     # 应用启动前先初始化日志配置，便于后续排查问题。
     configure_logging()
 

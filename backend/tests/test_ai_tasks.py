@@ -2,6 +2,7 @@
 
 from collections.abc import Generator
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
@@ -120,3 +121,55 @@ def test_create_ai_task_rejects_invalid_task_type(client: TestClient) -> None:
     )
     assert response.status_code == 400
     assert "Unsupported task_type" in response.json()["detail"]
+
+
+def test_fetch_webpage_extracts_title_and_text(monkeypatch: pytest.MonkeyPatch) -> None:
+    html = """
+    <html>
+      <head><title>Example Article</title></head>
+      <body>
+        <script>console.log('ignored')</script>
+        <main>  Hello <b>research</b> world. </main>
+      </body>
+    </html>
+    """
+
+    monkeypatch.setattr(AITaskProcessor, "_download_webpage_html", staticmethod(lambda _url: html))
+
+    title, text = AITaskProcessor._fetch_webpage("https://example.com/article")
+
+    assert title == "Example Article"
+    assert "Hello research world." in text
+    assert "ignored" not in text
+
+
+def test_fetch_webpage_retries_after_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    attempts = {"count": 0}
+
+    def fake_download(_url: str) -> str:
+        attempts["count"] += 1
+        if attempts["count"] == 1:
+            raise httpx.ReadTimeout("The read operation timed out")
+        return "<html><head><title>Recovered</title></head><body>Recovered page text.</body></html>"
+
+    monkeypatch.setattr(AITaskProcessor, "_download_webpage_html", staticmethod(fake_download))
+
+    title, text = AITaskProcessor._fetch_webpage("https://example.com/retry")
+
+    assert attempts["count"] == 2
+    assert title == "Recovered"
+    assert "Recovered page text." in text
+
+
+def test_fetch_webpage_raises_readable_timeout_message(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        AITaskProcessor,
+        "_download_webpage_html",
+        staticmethod(lambda _url: (_ for _ in ()).throw(httpx.ReadTimeout("The read operation timed out"))),
+    )
+
+    with pytest.raises(RuntimeError) as exc_info:
+        AITaskProcessor._fetch_webpage("https://example.com/slow")
+
+    assert "读取 URL 超时" in str(exc_info.value)
+    assert "https://example.com/slow" in str(exc_info.value)

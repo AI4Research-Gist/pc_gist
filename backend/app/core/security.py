@@ -12,14 +12,17 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """校验明文密码与哈希密码是否匹配。"""
     return pwd_context.verify(plain_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
+    """把明文密码转换为可持久化保存的哈希字符串。"""
     return pwd_context.hash(password)
 
 
 def create_access_token(subject: str) -> str:
+    """为指定主体生成 JWT 访问令牌。"""
     # 目前 token 的 subject 约定为用户主键 ID。
     expire = datetime.now(UTC) + timedelta(minutes=settings.access_token_expire_minutes)
     payload = {"sub": subject, "exp": expire}
@@ -27,6 +30,7 @@ def create_access_token(subject: str) -> str:
 
 
 def decode_access_token(token: str) -> dict:
+    """解码 JWT 访问令牌并返回其中的载荷。"""
     return jwt.decode(token, settings.secret_key, algorithms=["HS256"])
 
 

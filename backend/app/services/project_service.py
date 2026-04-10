@@ -16,6 +16,7 @@ from app.schemas.project import (
 
 class ProjectService:
     def __init__(self, db: Session) -> None:
+        """初始化项目服务并挂载项目仓储。"""
         self.db = db
         self.project_repository = ProjectRepository(db)
 
@@ -27,6 +28,7 @@ class ProjectService:
         page: int = 1,
         page_size: int = 20,
     ) -> ProjectListResponse:
+        """按分页和关键字条件返回当前用户的项目列表。"""
         projects, total = self.project_repository.list_projects(
             owner_id=current_user.Id,
             keyword=keyword,
@@ -41,6 +43,7 @@ class ProjectService:
         )
 
     def create_project(self, payload: ProjectCreateRequest, *, current_user: User) -> ProjectResponse:
+        """创建新项目并返回标准项目响应。"""
         project = self.project_repository.create_project(
             name=payload.name,
             title=payload.title or payload.name,
@@ -50,6 +53,7 @@ class ProjectService:
         return self._to_response(project, item_count=0)
 
     def get_project(self, project_id: int, *, current_user: User) -> ProjectResponse:
+        """获取指定项目详情及其条目统计。"""
         project = self._get_project_or_404(project_id, current_user=current_user)
         return self._to_response(
             project,
@@ -57,6 +61,7 @@ class ProjectService:
         )
 
     def update_project(self, project_id: int, payload: ProjectUpdateRequest, *, current_user: User) -> ProjectResponse:
+        """更新指定项目并返回包含条目数量的最新结果。"""
         project = self._get_project_or_404(project_id, current_user=current_user)
         updated_project = self.project_repository.update_project(
             project,
@@ -70,10 +75,12 @@ class ProjectService:
         )
 
     def delete_project(self, project_id: int, *, current_user: User) -> None:
+        """删除指定项目。"""
         project = self._get_project_or_404(project_id, current_user=current_user)
         self.project_repository.delete_project(project)
 
     def _get_project_or_404(self, project_id: int, *, current_user: User) -> Project:
+        """查询项目，不存在时抛出 404。"""
         project = self.project_repository.get_by_id(project_id, owner_id=current_user.Id)
         if project is None:
             raise HTTPException(
@@ -84,6 +91,7 @@ class ProjectService:
 
     @staticmethod
     def _to_response(project: Project, *, item_count: int = 0) -> ProjectResponse:
+        """把项目 ORM 对象转换成接口返回的响应模型。"""
         return ProjectResponse(
             id=project.Id,
             owner_id=project.ownerId or 0,

@@ -15,6 +15,7 @@ from app.schemas.item import ItemCreateRequest, ItemListResponse, ItemResponse, 
 
 class ItemService:
     def __init__(self, db: Session) -> None:
+        """初始化条目服务并挂载条目与项目仓储。"""
         self.item_repository = ItemRepository(db)
         self.project_repository = ProjectRepository(db)
 
@@ -32,6 +33,7 @@ class ItemService:
         sort_by: str = "created_at",
         sort_order: str = "desc",
     ) -> ItemListResponse:
+        """按筛选条件返回当前用户的条目列表。"""
         items, total = self.item_repository.list_items(
             owner_id=current_user.Id,
             item_type=item_type,
@@ -52,6 +54,7 @@ class ItemService:
         )
 
     def create_item(self, payload: ItemCreateRequest, *, current_user: User) -> ItemResponse:
+        """创建新条目并返回标准条目响应。"""
         self._ensure_project_exists(payload.project_id, current_user=current_user)
         item = self.item_repository.create_item(
             item_type=payload.type,
@@ -70,10 +73,12 @@ class ItemService:
         return self._to_response(item)
 
     def get_item(self, item_id: int, *, current_user: User) -> ItemResponse:
+        """获取指定条目的详情。"""
         item = self._get_item_or_404(item_id, current_user=current_user)
         return self._to_response(item)
 
     def update_item(self, item_id: int, payload: ItemUpdateRequest, *, current_user: User) -> ItemResponse:
+        """更新指定条目并返回最新结果。"""
         item = self._get_item_or_404(item_id, current_user=current_user)
         updates = payload.model_dump(exclude_unset=True)
         if "project_id" in updates:
@@ -85,10 +90,12 @@ class ItemService:
         return self._to_response(updated_item)
 
     def delete_item(self, item_id: int, *, current_user: User) -> None:
+        """删除指定条目。"""
         item = self._get_item_or_404(item_id, current_user=current_user)
         self.item_repository.delete_item(item)
 
     def _get_item_or_404(self, item_id: int, *, current_user: User) -> Item:
+        """查询条目，不存在时抛出 404。"""
         item = self.item_repository.get_by_id(item_id, owner_id=current_user.Id)
         if item is None:
             raise HTTPException(
@@ -98,6 +105,7 @@ class ItemService:
         return item
 
     def _ensure_project_exists(self, project_id: int | None, *, current_user: User) -> None:
+        """校验条目绑定的项目在当前用户作用域内真实存在。"""
         if project_id is None:
             return
         project = self.project_repository.get_by_id(project_id, owner_id=current_user.Id)
@@ -108,6 +116,7 @@ class ItemService:
             )
 
     def _normalize_meta_json(self, value: dict[str, Any] | str | None) -> dict[str, Any] | None:
+        """把 meta_json 统一规范成可入库的字典对象。"""
         if value is None:
             return None
         if isinstance(value, dict):
@@ -128,6 +137,7 @@ class ItemService:
 
     @staticmethod
     def _to_response(item: Item) -> ItemResponse:
+        """把条目 ORM 对象转换成条目响应模型。"""
         return ItemResponse(
             id=item.Id,
             owner_id=item.ownerId or 0,

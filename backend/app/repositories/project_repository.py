@@ -10,6 +10,7 @@ from app.repositories.base import BaseRepository
 
 class ProjectRepository(BaseRepository):
     def __init__(self, db: Session) -> None:
+        """使用指定数据库会话初始化项目仓储。"""
         super().__init__(db)
 
     def list_projects(
@@ -20,6 +21,7 @@ class ProjectRepository(BaseRepository):
         page: int = 1,
         page_size: int = 20,
     ) -> tuple[list[tuple[Project, int]], int]:
+        """查询项目列表并返回每个项目关联的条目数量。"""
         filters = [Project.ownerId == owner_id]
         if keyword:
             pattern = f"%{keyword.strip()}%"
@@ -49,6 +51,7 @@ class ProjectRepository(BaseRepository):
         return list(projects), total
 
     def count_items(self, project_id: int, *, owner_id: int) -> int:
+        """统计某个项目在当前用户下关联的条目总数。"""
         statement = select(func.count()).select_from(Item).where(
             Item.project_id == project_id,
             Item.ownerId == owner_id,
@@ -56,6 +59,7 @@ class ProjectRepository(BaseRepository):
         return self.db.execute(statement).scalar_one()
 
     def get_by_id(self, project_id: int, *, owner_id: int) -> Project | None:
+        """按项目主键和所属用户查询单个项目。"""
         statement = select(Project).where(
             Project.Id == project_id,
             Project.ownerId == owner_id,
@@ -70,6 +74,7 @@ class ProjectRepository(BaseRepository):
         description: str | None = None,
         owner_id: int | None = None,
     ) -> Project:
+        """创建项目并返回数据库刷新后的对象。"""
         project = Project(
             name=name,
             Title=title,
@@ -89,6 +94,7 @@ class ProjectRepository(BaseRepository):
         title: str | None = None,
         description: str | None = None,
     ) -> Project:
+        """更新项目的基础信息并返回最新结果。"""
         if name is not None:
             project.name = name
         if title is not None:
@@ -102,6 +108,7 @@ class ProjectRepository(BaseRepository):
         return project
 
     def delete_project(self, project: Project) -> None:
+        """删除项目，并把项目下条目统一转成未分组状态。"""
         # 删除项目之前先把条目转移到“未分组”状态，避免外键和业务归属混乱。
         self.db.execute(
             update(Item)

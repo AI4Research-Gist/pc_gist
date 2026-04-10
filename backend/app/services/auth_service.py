@@ -12,9 +12,11 @@ from app.schemas.user import UserResponse
 
 class AuthService:
     def __init__(self, db: Session) -> None:
+        """初始化认证服务并挂载用户仓储。"""
         self.user_repository = UserRepository(db)
 
     def register(self, payload: RegisterRequest) -> LoginResponse:
+        """注册新用户并立即返回登录态。"""
         # 先做参数校验，再做唯一性校验，最后才写数据库。
         self._validate_register_payload(payload)
         self._ensure_user_not_exists(payload)
@@ -31,6 +33,7 @@ class AuthService:
         return LoginResponse(user=self._to_user_response(user), access_token=token)
 
     def login(self, payload: LoginRequest) -> LoginResponse:
+        """校验登录凭据并签发访问令牌。"""
         # 登录沿用原项目约定，支持用户名/邮箱/手机号三种标识。
         self._validate_login_payload(payload)
 
@@ -52,12 +55,15 @@ class AuthService:
         return LoginResponse(user=self._to_user_response(user), access_token=token)
 
     def get_current_user(self, current_user: User) -> UserResponse:
+        """把当前用户 ORM 对象转换成标准响应结构。"""
         return self._to_user_response(current_user)
 
     def logout(self, current_user: User) -> dict[str, str]:
+        """返回当前用户登出成功的确认消息。"""
         return {"message": f"User {current_user.Id} logged out successfully"}
 
     def change_password(self, current_user: User, payload: ChangePasswordRequest) -> dict[str, str]:
+        """修改当前用户密码并返回操作结果。"""
         self._validate_change_password_payload(payload)
 
         if current_user.password != payload.current_password:
@@ -76,6 +82,7 @@ class AuthService:
         return {"message": "Password updated successfully"}
 
     def _ensure_user_not_exists(self, payload: RegisterRequest) -> None:
+        """检查注册信息是否与现有用户产生唯一性冲突。"""
         # 显式做唯一性判断，可以给前端返回更明确的冲突信息。
         if self.user_repository.get_by_username(payload.username):
             raise HTTPException(
@@ -96,6 +103,7 @@ class AuthService:
             )
 
     def _validate_register_payload(self, payload: RegisterRequest) -> None:
+        """校验注册请求的基础合法性。"""
         if len(payload.username.strip()) < 3:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -109,6 +117,7 @@ class AuthService:
             )
 
     def _validate_login_payload(self, payload: LoginRequest) -> None:
+        """校验登录请求体中的必填字段。"""
         if not payload.identifier.strip():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -122,6 +131,7 @@ class AuthService:
             )
 
     def _validate_change_password_payload(self, payload: ChangePasswordRequest) -> None:
+        """校验修改密码请求中的输入约束。"""
         if not payload.current_password:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -136,6 +146,7 @@ class AuthService:
 
     @staticmethod
     def _to_user_response(user: User) -> UserResponse:
+        """把用户 ORM 对象映射成接口层响应模型。"""
         # 把 ORM 字段转换成接口层约定的响应结构。
         return UserResponse(
             id=user.Id,

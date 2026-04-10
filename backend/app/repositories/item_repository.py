@@ -11,6 +11,7 @@ from app.repositories.base import BaseRepository
 
 class ItemRepository(BaseRepository):
     def __init__(self, db: Session) -> None:
+        """使用指定数据库会话初始化条目仓储。"""
         super().__init__(db)
 
     def list_items(
@@ -27,6 +28,7 @@ class ItemRepository(BaseRepository):
         sort_by: str = "created_at",
         sort_order: str = "desc",
     ) -> tuple[list[Item], int]:
+        """按过滤条件、分页和排序规则查询条目列表。"""
         filters = [Item.ownerId == owner_id]
         if item_type:
             filters.append(Item.type == item_type)
@@ -62,6 +64,7 @@ class ItemRepository(BaseRepository):
         return list(items), total
 
     def get_by_id(self, item_id: int, *, owner_id: int) -> Item | None:
+        """按条目主键和所属用户查询单条记录。"""
         statement = select(Item).where(
             Item.Id == item_id,
             Item.ownerId == owner_id,
@@ -84,6 +87,7 @@ class ItemRepository(BaseRepository):
         meta_json: dict[str, Any] | None = None,
         owner_id: int | None = None,
     ) -> Item:
+        """创建条目并返回数据库刷新后的对象。"""
         item = Item(
             type=item_type,
             title=title,
@@ -104,6 +108,7 @@ class ItemRepository(BaseRepository):
         return item
 
     def update_item(self, item: Item, **updates: Any) -> Item:
+        """按允许更新的字段集合批量修改条目。"""
         field_mapping = {
             "type": "type",
             "title": "title",
@@ -128,11 +133,13 @@ class ItemRepository(BaseRepository):
         return item
 
     def delete_item(self, item: Item) -> None:
+        """删除指定条目记录。"""
         self.db.delete(item)
         self.db.commit()
 
     @staticmethod
     def _get_sort_clause(sort_by: str, sort_order: str):
+        """把排序字段和方向转换成 SQLAlchemy 排序表达式。"""
         sort_mapping = {
             "created_at": Item.CreatedAt,
             "updated_at": Item.UpdatedAt,

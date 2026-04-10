@@ -10,12 +10,15 @@ from app.schemas.user import UserResponse, UserUpdateRequest
 
 class UserService:
     def __init__(self, db: Session) -> None:
+        """初始化用户服务并挂载用户仓储。"""
         self.user_repository = UserRepository(db)
 
     def get_current_user(self, current_user: User) -> UserResponse:
+        """返回当前登录用户的标准资料响应。"""
         return self._to_user_response(current_user)
 
     def update_current_user(self, current_user: User, payload: UserUpdateRequest) -> UserResponse:
+        """更新当前登录用户资料并返回最新结果。"""
         self._validate_update_payload(current_user, payload)
 
         updated_user = self.user_repository.update_user(
@@ -29,6 +32,7 @@ class UserService:
         return self._to_user_response(updated_user)
 
     def is_username_available(self, username: str) -> bool:
+        """判断指定用户名在当前系统中是否可用。"""
         candidate = username.strip()
         if not candidate:
             raise HTTPException(
@@ -38,6 +42,7 @@ class UserService:
         return self.user_repository.get_by_username(candidate) is None
 
     def _validate_update_payload(self, current_user: User, payload: UserUpdateRequest) -> None:
+        """校验用户资料更新请求的长度和唯一性约束。"""
         if payload.username is not None:
             username = payload.username.strip()
             if len(username) < 3:
@@ -70,6 +75,7 @@ class UserService:
 
     @staticmethod
     def _to_user_response(user: User) -> UserResponse:
+        """把用户 ORM 对象转换成用户资料响应模型。"""
         return UserResponse(
             id=user.Id,
             username=user.username,

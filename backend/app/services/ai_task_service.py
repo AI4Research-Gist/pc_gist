@@ -30,6 +30,7 @@ TASK_ALIASES = {
 
 
 def process_ai_task_in_background(task_id: int, session_factory: sessionmaker) -> None:
+    """在后台会话中执行 AI 任务并更新任务状态。"""
     db = session_factory()
     repository = AITaskRepository(db)
     try:
@@ -50,6 +51,7 @@ def process_ai_task_in_background(task_id: int, session_factory: sessionmaker) -
 
 class AITaskService:
     def __init__(self, db: Session) -> None:
+        """初始化 AI 任务服务并挂载仓储。"""
         self.db = db
         self.repository = AITaskRepository(db)
 
@@ -59,6 +61,7 @@ class AITaskService:
         current_user: User,
         background_tasks: BackgroundTasks,
     ) -> AITaskResponse:
+        """创建 AI 任务并把实际处理逻辑投递到后台。"""
         normalized_task_type, normalized_input_type = self._validate_create_payload(payload)
 
         task = self.repository.create_task(
@@ -77,6 +80,7 @@ class AITaskService:
         return self._to_task_response(task)
 
     def get_task(self, task_id: int, current_user: User) -> AITaskStatusResponse:
+        """查询当前用户可访问的 AI 任务详情。"""
         task = self.repository.get_by_id(task_id, owner_id=current_user.Id)
         if task is None:
             raise HTTPException(
@@ -86,6 +90,7 @@ class AITaskService:
         return self._to_task_status_response(task)
 
     def _validate_create_payload(self, payload: AITaskCreateRequest) -> tuple[str, str]:
+        """校验任务类型、输入类型和输入载荷是否匹配。"""
         normalized_task_type = TASK_ALIASES.get(payload.task_type, payload.task_type)
         expected_input_type = SUPPORTED_TASKS.get(normalized_task_type)
         if expected_input_type is None:
@@ -108,6 +113,7 @@ class AITaskService:
 
     @staticmethod
     def _to_task_response(task: AITask) -> AITaskResponse:
+        """把任务对象转换成创建接口使用的精简响应。"""
         return AITaskResponse(
             id=task.id,
             task_type=task.task_type,
@@ -118,6 +124,7 @@ class AITaskService:
 
     @staticmethod
     def _to_task_status_response(task: AITask) -> AITaskStatusResponse:
+        """把任务对象转换成状态查询接口使用的完整响应。"""
         return AITaskStatusResponse(
             id=task.id,
             item_id=task.item_id,
@@ -133,4 +140,3 @@ class AITaskService:
             created_at=task.CreatedAt,
             updated_at=task.UpdatedAt,
         )
-

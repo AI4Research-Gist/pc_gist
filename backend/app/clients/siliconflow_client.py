@@ -11,6 +11,7 @@ from app.core.config import settings
 
 class SiliconFlowClient:
     def __init__(self) -> None:
+        """初始化 SiliconFlow 客户端及公共请求参数。"""
         if not settings.siliconflow_api_key:
             raise RuntimeError("SILICONFLOW_API" \
             "_KEY is not configured.")
@@ -30,6 +31,7 @@ class SiliconFlowClient:
         temperature: float = 0.2,
         max_tokens: int = 4096,
     ) -> str:
+        """调用 SiliconFlow 文本/视觉模型完成对话补全。"""
         payload: dict[str, Any] = {
             "model": model,
             "messages": messages,
@@ -57,6 +59,7 @@ class SiliconFlowClient:
         content_type: str | None = None,
         language: str | None = None,
     ) -> str:
+        """调用 SiliconFlow 音频转写接口返回纯文本结果。"""
         files = {
             "file": (filename, audio_bytes, content_type or "application/octet-stream"),
         }
@@ -80,6 +83,7 @@ class SiliconFlowClient:
 
     @staticmethod
     def _raise_for_status(response: httpx.Response, action: str) -> None:
+        """把非 2xx HTTP 响应统一转换成业务可读错误。"""
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as exc:

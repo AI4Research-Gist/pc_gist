@@ -9,25 +9,31 @@ from app.repositories.base import BaseRepository
 
 class UserRepository(BaseRepository):
     def __init__(self, db: Session) -> None:
+        """使用指定数据库会话初始化用户仓储。"""
         super().__init__(db)
 
     def get_by_id(self, user_id: int) -> User | None:
+        """按用户主键查询用户。"""
         statement = select(User).where(User.Id == user_id)
         return self.db.execute(statement).scalar_one_or_none()
 
     def get_by_username(self, username: str) -> User | None:
+        """按用户名查询用户。"""
         statement = select(User).where(User.username == username)
         return self.db.execute(statement).scalar_one_or_none()
 
     def get_by_email(self, email: str) -> User | None:
+        """按邮箱查询用户。"""
         statement = select(User).where(User.email == email)
         return self.db.execute(statement).scalar_one_or_none()
 
     def get_by_phone(self, phone: str) -> User | None:
+        """按手机号查询用户。"""
         statement = select(User).where(User.Phonenumber == phone)
         return self.db.execute(statement).scalar_one_or_none()
 
     def get_by_identifier(self, identifier: str) -> User | None:
+        """按用户名、邮箱或手机号任一标识查询用户。"""
         # 当前客户端允许用户名、邮箱、手机号任意一种方式登录。
         statement = select(User).where(
             or_(
@@ -48,6 +54,7 @@ class UserRepository(BaseRepository):
         avatar_url: str | None = None,
         biometric_enabled: bool | None = False,
     ) -> User:
+        """创建用户并返回包含数据库生成字段的对象。"""
         # commit + refresh 后，调用方可以直接拿到数据库生成的 Id 和时间字段。
         user = User(
             username=username,
@@ -63,6 +70,7 @@ class UserRepository(BaseRepository):
         return user
 
     def update_user_password(self, user: User, new_password: str) -> User:
+        """更新用户密码并返回最新用户对象。"""
         user.password = new_password
         self.db.add(user)
         self.db.commit()
@@ -79,6 +87,7 @@ class UserRepository(BaseRepository):
         avatar_url: str | None = None,
         biometric_enabled: bool | None = None,
     ) -> User:
+        """更新用户资料字段并返回数据库刷新后的结果。"""
         if username is not None:
             user.username = username
         if email is not None:
